@@ -4,9 +4,11 @@ import {
     Column,
     CreateDateColumn,
     UpdateDateColumn,
-    BaseEntity
+    BaseEntity,
+    OneToMany
 } from "typeorm";
 import { Field, Int, ObjectType } from "type-graphql";
+import { Beat } from "./Beat";
 
 @ObjectType()
 @Entity()
@@ -33,6 +35,10 @@ export class User extends BaseEntity {
     @Field(() => Boolean)
     @Column({ type: "boolean", nullable: true })
     isAdmin: Boolean;
+
+    @Field()
+    @OneToMany(() => Beat, (beat) => beat.creator)
+    beats: Beat[];
 
     @Field(() => String)
     @CreateDateColumn()
