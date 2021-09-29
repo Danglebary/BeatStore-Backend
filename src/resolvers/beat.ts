@@ -28,7 +28,7 @@ export class BeatResolver {
 
     @Mutation(() => Beat)
     @UseMiddleware(isAuth)
-    createPost(
+    createBeat(
         @Arg("options") options: CreateBeatInput,
         @Ctx() { req }: MyContext
     ): Promise<Beat> {
@@ -39,7 +39,7 @@ export class BeatResolver {
     }
 
     @Mutation(() => Beat, { nullable: true })
-    async updatePost(
+    async updateBeat(
         @Arg("options") options: UpdateBeatInput
     ): Promise<Beat | null> {
         const beat = await Beat.findOne({ where: { id: options.id } });
@@ -49,7 +49,7 @@ export class BeatResolver {
     }
 
     @Mutation(() => Boolean)
-    async deletePost(@Arg("id", () => Int) id: number): Promise<boolean> {
+    async deleteBeat(@Arg("id", () => Int) id: number): Promise<boolean> {
         await Beat.delete(id);
         return true;
     }
