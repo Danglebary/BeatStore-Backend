@@ -5,9 +5,9 @@ import cors from "cors";
 // type-graphQL imports
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
-// MikroORM imports
-import { MikroORM } from "@mikro-orm/core";
-import ormConfig from "./mikro-orm.config";
+// TypeORM imports
+import { createConnection } from "typeorm";
+import ormConfig from "./type-orm.config";
 // Redis imports
 import Redis from "ioredis";
 import connectRedis from "connect-redis";
@@ -21,8 +21,8 @@ import { MyContext } from "./types";
 
 const main = async () => {
     console.log("[SERVER] initializing database connection");
-    const orm = await MikroORM.init(ormConfig);
-    await orm.getMigrator().up();
+    const conn = await createConnection(ormConfig);
+    console.log(conn);
 
     console.log("[SERVER] creating server instance");
     const app = express();
@@ -67,7 +67,7 @@ const main = async () => {
                     resolvers: [PostResolver, UserResolver],
                     validate: false
                 }),
-                context: { em: orm.em, req, res, redis } as MyContext,
+                context: { req, res, redis } as MyContext,
                 graphiql: true
             };
         })

@@ -16,43 +16,35 @@ import { UserResponse, RegisterUserInput, LoginUserInput } from "../orm_types";
 @Resolver()
 export class UserResolver {
     @Query(() => User, { nullable: true })
-    async me(@Ctx() { em, req }: MyContext): Promise<User | null> {
-        if (!req.session.userId) return null;
-        return await em.findOne(User, { id: req.session.userId });
+    me(@Ctx() { req }: MyContext): Promise<User | undefined> | undefined {
+        if (!req.session.userId) return undefined;
+        return User.findOne(req.session.userId);
     }
 
     @Query(() => [User])
-    async users(@Ctx() { em }: MyContext): Promise<User[]> {
-        return await em.find(User, {});
+    async users(): Promise<User[] | undefined> {
+        return User.find();
     }
 
     @Query(() => User, { nullable: true })
-    async user(
-        @Arg("id", () => Int) id: number,
-        @Ctx() { em }: MyContext
-    ): Promise<User | null> {
-        return await em.findOne(User, { id });
+    user(@Arg("id", () => Int) id: number): Promise<User | undefined> {
+        return User.findOne(id);
     }
 
     @Mutation(() => UserResponse)
     async register(
         @Arg("options") options: RegisterUserInput,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse> {
-        const validation = await validateRegister(options, em);
+        const validation = await validateRegister(options);
         if (validation.errors) {
             return validation;
         }
-
-        // never store plain-text passwords!
-        const hashedPass = await argon2.hash(options.password);
-        const user = em.create(User, {
+        const user = await User.create({
             email: options.email,
             userName: options.username,
-            password: hashedPass
-        });
-
-        await em.persistAndFlush(user);
+            password: await argon2.hash(options.password)
+        }).save();
 
         // set client session to log user in
         req.session.userId = user.id;
@@ -63,19 +55,19 @@ export class UserResolver {
     @Mutation(() => Boolean)
     async removeUser(
         @Arg("userId") userId: number,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<Boolean> {
         // check if logged in && isAdmin first
-        const reqUser = await em.findOne(User, { id: req.session.userId });
+        const reqUser = await User.findOne(req.session.userId);
         if (!reqUser) return false;
         if (!reqUser.isAdmin) return false;
 
         // check if user to be removed exists
-        const userById = await em.findOne(User, { id: userId });
-        if (!userById) return false;
+        const userToRemove = await User.findOne(userId);
+        if (!userToRemove) return false;
 
         try {
-            await em.nativeDelete(User, { id: userId });
+            User.delete(userId);
             return true;
         } catch (err) {
             console.log(err);
@@ -86,17 +78,14 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async login(
         @Arg("options") options: LoginUserInput,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse> {
         const isEmail = options.usernameOrEmail.includes("@");
-
-        const user = await em.findOne(
-            User,
+        const user = await User.findOne(
             isEmail
-                ? { email: options.usernameOrEmail }
-                : { userName: options.usernameOrEmail }
+                ? { where: { email: options.usernameOrEmail } }
+                : { where: { userName: options.usernameOrEmail } }
         );
-
         if (!user) {
             return {
                 errors: [
@@ -109,21 +98,14 @@ export class UserResolver {
                 ]
             };
         }
-
-        const isValidPass = await argon2.verify(
-            user.password,
-            options.password
-        );
-
+        const isValidPass = argon2.verify(user.password, options.password);
         if (!isValidPass) {
             return {
                 errors: [{ field: "password", message: "incorrect password" }]
             };
         }
 
-        // set client session to log user in
         req.session!.userId = user.id;
-
         return { user };
     }
 
@@ -146,9 +128,9 @@ export class UserResolver {
     @Mutation(() => Boolean)
     async forgotPasswordDev(
         @Arg("email") email: string,
-        @Ctx() { em, redis }: MyContext
+        @Ctx() { redis }: MyContext
     ): Promise<Boolean> {
-        const user = await em.findOne(User, { email });
+        const user = await User.findOne({ where: { email } });
         // if email is not associated with a user, return true
         // to prevent phishing atempts
         if (!user) return true;
@@ -174,7 +156,7 @@ export class UserResolver {
     async changePassword(
         @Arg("token") token: string,
         @Arg("newPassword") newPassword: string,
-        @Ctx() { em, req, redis }: MyContext
+        @Ctx() { req, redis }: MyContext
     ): Promise<UserResponse> {
         const validation = validateChangePassword(newPassword);
         if (validation.errors) {
@@ -194,7 +176,8 @@ export class UserResolver {
             };
         }
 
-        const user = await em.findOne(User, { id: parseInt(userId) });
+        const userIdNum = parseInt(userId);
+        const user = await User.findOne(userIdNum);
         if (!user) {
             return {
                 errors: [
@@ -206,16 +189,13 @@ export class UserResolver {
             };
         }
 
-        const hashedPass = await argon2.hash(newPassword);
-        user.password = hashedPass;
-        try {
-            await em.persistAndFlush(user);
-            await redis.del(redisKey);
-            // set client session to log user in
-            req.session!.userId = user.id;
-            return { user };
-        } catch (err) {
-            return { errors: [{ field: "server", message: "error" }] };
-        }
+        await User.update(
+            { id: userIdNum },
+            { password: await argon2.hash(newPassword) }
+        );
+        await redis.del(redisKey);
+        req.session!.userId = user.id;
+
+        return { user };
     }
 }

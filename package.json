@@ -20,6 +20,7 @@
         "nodemailer": "^6.6.5",
         "pg": "^8.7.1",
         "type-graphql": "^1.1.1",
+        "typeorm": "^0.2.37",
         "uuid": "^8.3.2"
     },
     "devDependencies": {

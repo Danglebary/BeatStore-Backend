@@ -5,7 +5,6 @@ import {
     FieldError
 } from "../orm_types";
 import { validateIsEmail, validateStringLength } from "./validation_base";
-import { MyContext } from "../types";
 import { User } from "../entities/User";
 
 const formatError: (field: string, message: string) => FieldError = (
@@ -19,13 +18,14 @@ const formatError: (field: string, message: string) => FieldError = (
 };
 
 export const validateRegister: (
-    data: RegisterUserInput,
-    em: MyContext["em"]
-) => Promise<ValidationResponse> = async (data, em) => {
+    data: RegisterUserInput
+) => Promise<ValidationResponse> = async (data) => {
     const errors: FieldError[] = [];
 
-    const userByEmail = await em.findOne(User, { email: data.email });
-    const userByUsername = await em.findOne(User, { userName: data.username });
+    const userByEmail = await User.findOne({ where: { email: data.email } });
+    const userByUsername = await User.findOne({
+        where: { userName: data.username }
+    });
 
     if (userByEmail) {
         errors.push(formatError("email", "account exists with this email"));
@@ -36,11 +36,13 @@ export const validateRegister: (
         );
     }
 
+    // email character evaluation
     const emailValid = validateIsEmail(data.email);
     if (!emailValid) {
         errors.push(formatError("email", "invalid email"));
     }
 
+    // username character evaluation
     const usernameCharsValid = validateIsEmail(data.username);
     if (usernameCharsValid) {
         errors.push(formatError("username", "must not include '@'"));
@@ -61,7 +63,7 @@ export const validateRegister: (
         );
     }
 
-    if (errors.length > 0) return { errors: errors };
+    if (errors.length > 0) return { errors };
 
     return { valid: true };
 };
@@ -78,6 +80,6 @@ export const validateChangePassword: (
         );
     }
 
-    if (errors.length > 0) return { errors: errors };
+    if (errors.length > 0) return { errors };
     return { valid: true };
 };
