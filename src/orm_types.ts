@@ -1,4 +1,5 @@
 import { InputType, Field, ObjectType, Int } from "type-graphql";
+import { Beat } from "./entities/Beat";
 import { User } from "./entities/User";
 import { MusicalKeys } from "./types";
 
@@ -71,6 +72,15 @@ export class FieldError {
     field: string;
     @Field(() => String)
     message: string;
+}
+
+@ObjectType()
+export class BeatResponse {
+    @Field(() => [FieldError], { nullable: true })
+    errors?: FieldError[];
+
+    @Field(() => Beat, { nullable: true })
+    beat?: Beat;
 }
 
 @ObjectType()
