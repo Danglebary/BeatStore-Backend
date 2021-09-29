@@ -21,8 +21,7 @@ import { MyContext } from "./types";
 
 const main = async () => {
     console.log("[SERVER] initializing database connection");
-    const conn = await createConnection(ormConfig);
-    console.log(conn);
+    await createConnection(ormConfig);
 
     console.log("[SERVER] creating server instance");
     const app = express();
