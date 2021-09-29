@@ -11,8 +11,9 @@ import {
 import { Beat } from "../entities/Beat";
 import { isAuth } from "../middleware/isAuth";
 // Custom imports
-import { CreateBeatInput, UpdateBeatInput } from "../orm_types";
+import { BeatResponse, CreateBeatInput, UpdateBeatInput } from "../orm_types";
 import { MyContext } from "../types";
+import { validateBeatUpload } from "../validation/validate_beat";
 
 @Resolver()
 export class BeatResolver {
@@ -28,24 +29,35 @@ export class BeatResolver {
 
     @Mutation(() => Beat)
     @UseMiddleware(isAuth)
-    createBeat(
+    async createBeat(
         @Arg("options") options: CreateBeatInput,
         @Ctx() { req }: MyContext
-    ): Promise<Beat> {
-        return Beat.create({
+    ): Promise<BeatResponse> {
+        const validation = validateBeatUpload(options);
+
+        if (validation.errors) {
+            return validation;
+        }
+
+        const beat = await Beat.create({
             ...options,
             creatorId: req.session.userId
         }).save();
+
+        return { beat };
     }
 
     @Mutation(() => Beat, { nullable: true })
     async updateBeat(
         @Arg("options") options: UpdateBeatInput
-    ): Promise<Beat | null> {
+    ): Promise<BeatResponse> {
         const beat = await Beat.findOne({ where: { id: options.id } });
-        if (!beat) return null;
+        if (!beat)
+            return {
+                errors: [{ field: "id", message: "beat no longer exists" }]
+            };
 
-        return beat;
+        return { beat };
     }
 
     @Mutation(() => Boolean)

@@ -3,9 +3,11 @@ import { Field, Int, ObjectType } from "type-graphql";
 import {
     BaseEntity,
     Column,
+    CreateDateColumn,
     Entity,
     ManyToOne,
-    PrimaryGeneratedColumn
+    PrimaryGeneratedColumn,
+    UpdateDateColumn
 } from "typeorm";
 // Custom imports
 import { MusicalKeys } from "../types";
@@ -26,13 +28,13 @@ export class Beat extends BaseEntity {
     @Column({ nullable: true })
     genre: string;
 
-    @Field(() => Int)
-    @Column({ type: "int" })
-    bpm!: number;
+    @Field(() => Int, { nullable: true })
+    @Column({ type: "int", nullable: true })
+    bpm: number;
 
-    @Field(() => String)
-    @Column()
-    key!: MusicalKeys;
+    @Field(() => String, { nullable: true })
+    @Column({ nullable: true })
+    key: MusicalKeys;
 
     @Field(() => [String], { nullable: true })
     @Column({ type: "simple-array", nullable: true })
@@ -52,4 +54,12 @@ export class Beat extends BaseEntity {
     @Field(() => String, { nullable: true })
     @Column({ nullable: true })
     url: string;
+
+    @Field(() => String)
+    @CreateDateColumn()
+    createdAt: Date;
+
+    @Field(() => String)
+    @UpdateDateColumn()
+    updatedAt: Date;
 }

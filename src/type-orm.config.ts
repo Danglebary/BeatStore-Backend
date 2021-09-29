@@ -3,6 +3,7 @@ import { ConnectionOptions } from "typeorm";
 // Entity imports
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
+import { Beat } from "./entities/Beat";
 
 const ormConfig: ConnectionOptions = {
     type: "postgres",
@@ -11,7 +12,7 @@ const ormConfig: ConnectionOptions = {
     password: "postgres",
     logging: true,
     synchronize: true,
-    entities: [User, Post]
+    entities: [User, Post, Beat]
 };
 
 export default ormConfig;

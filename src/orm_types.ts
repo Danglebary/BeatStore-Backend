@@ -26,11 +26,11 @@ export class CreateBeatInput {
     @Field(() => String, { nullable: true })
     genre?: string;
 
-    @Field(() => Int)
-    bpm!: number;
+    @Field(() => Int, { nullable: true })
+    bpm?: number;
 
-    @Field(() => String)
-    key!: MusicalKeys;
+    @Field(() => String, { nullable: true })
+    key?: MusicalKeys;
 
     @Field(() => [String], { nullable: true })
     tags?: string[];

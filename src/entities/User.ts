@@ -36,9 +36,9 @@ export class User extends BaseEntity {
     @Column({ type: "boolean", nullable: true })
     isAdmin: Boolean;
 
-    @Field()
+    @Field(() => [Beat])
     @OneToMany(() => Beat, (beat) => beat.creator)
-    beats: Beat[];
+    beats!: Beat[];
 
     @Field(() => String)
     @CreateDateColumn()

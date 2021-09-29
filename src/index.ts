@@ -18,6 +18,8 @@ import { COOKIE_NAME, PORT, __prod__ } from "./constants";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
+import { BeatResolver } from "./resolvers/beat";
+import { graphqlUploadExpress } from "graphql-upload";
 
 const main = async () => {
     console.log("[SERVER] initializing database connection");
@@ -57,13 +59,15 @@ const main = async () => {
         })
     );
 
+    app.use(graphqlUploadExpress({ maxFileSize: 10000, maxFiles: 1 }));
+
     console.log("[SERVER] applying express-graphql middleware");
     app.use(
         "/graphql",
         graphqlHTTP(async (req, res) => {
             return {
                 schema: await buildSchema({
-                    resolvers: [PostResolver, UserResolver],
+                    resolvers: [PostResolver, UserResolver, BeatResolver],
                     validate: false
                 }),
                 context: { req, res, redis } as MyContext,

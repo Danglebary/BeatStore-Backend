@@ -1,3 +1,5 @@
+import { FieldError } from "../orm_types";
+
 export const validateStringLength: (
     data: string,
     min: number,
@@ -8,6 +10,16 @@ export const validateStringLength: (
 };
 
 export const validateIsEmail: (email: string) => boolean = (email) => {
-    if (!email.includes('@')) return false;
+    if (!email.includes("@")) return false;
     return true;
+};
+
+export const formatError: (field: string, message: string) => FieldError = (
+    field,
+    msg
+) => {
+    return {
+        field: field,
+        message: msg
+    };
 };

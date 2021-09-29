@@ -4,18 +4,12 @@ import {
     RegisterUserInput,
     FieldError
 } from "../orm_types";
-import { validateIsEmail, validateStringLength } from "./validation_base";
+import {
+    formatError,
+    validateIsEmail,
+    validateStringLength
+} from "./validation_base";
 import { User } from "../entities/User";
-
-const formatError: (field: string, message: string) => FieldError = (
-    field,
-    msg
-) => {
-    return {
-        field: field,
-        message: msg
-    };
-};
 
 export const validateRegister: (
     data: RegisterUserInput
