@@ -1,5 +1,6 @@
-import { InputType, Field, ObjectType } from 'type-graphql';
-import { User } from './entities/User';
+import { InputType, Field, ObjectType, Int } from "type-graphql";
+import { User } from "./entities/User";
+import { MusicalKeys } from "./types";
 
 @InputType()
 export class RegisterUserInput {
@@ -14,6 +15,45 @@ export class RegisterUserInput {
 
     @Field(() => String, { nullable: true })
     location?: string;
+}
+
+@InputType()
+export class CreateBeatInput {
+    @Field(() => String)
+    title!: string;
+
+    @Field(() => String, { nullable: true })
+    genre?: string;
+
+    @Field(() => Int)
+    bpm!: number;
+
+    @Field(() => String)
+    key!: MusicalKeys;
+
+    @Field(() => [String], { nullable: true })
+    tags?: string[];
+}
+
+@InputType()
+export class UpdateBeatInput {
+    @Field(() => Int)
+    id!: number;
+
+    @Field(() => String, { nullable: true })
+    title?: string;
+
+    @Field(() => String, { nullable: true })
+    genre?: string;
+
+    @Field(() => Int, { nullable: true })
+    bpm?: number;
+
+    @Field(() => String, { nullable: true })
+    key?: MusicalKeys;
+
+    @Field(() => [String], { nullable: true })
+    tags?: string[];
 }
 
 @InputType()
