@@ -1,5 +1,14 @@
 // General imports
-import { Arg, Ctx, Int, Mutation, Query, Resolver } from "type-graphql";
+import {
+    Arg,
+    Ctx,
+    FieldResolver,
+    Int,
+    Mutation,
+    Query,
+    Resolver,
+    Root
+} from "type-graphql";
 import argon2 from "argon2";
 import { v4 } from "uuid";
 // Custom imports
@@ -13,24 +22,39 @@ import { sendEmail } from "../utils/sendEmailDev";
 import { MyContext } from "../types";
 import { UserResponse, RegisterUserInput, LoginUserInput } from "../orm_types";
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+    // resolve email or empty string depending on the current logged in user
+    @FieldResolver(() => String)
+    email(@Root() user: User, @Ctx() { req }: MyContext) {
+        if (req.session.userId === user.id) {
+            // current user and fetched user are the same person
+            return user.email;
+        }
+        // current user fetching other user
+        return "";
+    }
+
+    // simple useful query to fetch current logged in user data
     @Query(() => User, { nullable: true })
     me(@Ctx() { req }: MyContext): Promise<User | undefined> | undefined {
         if (!req.session.userId) return undefined;
         return User.findOne(req.session.userId);
     }
 
+    // fetch all users
     @Query(() => [User])
     async users(): Promise<User[] | undefined> {
-        return User.find();
+        return User.find({});
     }
 
+    // fetch single user by id
     @Query(() => User, { nullable: true })
     user(@Arg("id", () => Int) id: number): Promise<User | undefined> {
         return User.findOne(id);
     }
 
+    // register new user
     @Mutation(() => UserResponse)
     async register(
         @Arg("options") options: RegisterUserInput,
@@ -52,6 +76,7 @@ export class UserResolver {
         return { user };
     }
 
+    // remove single user by id
     @Mutation(() => Boolean)
     async removeUser(
         @Arg("userId") userId: number,
@@ -125,6 +150,8 @@ export class UserResolver {
         );
     }
 
+    // send change password email to user if user exists with selected email,
+    // dev version using nodemailer
     @Mutation(() => Boolean)
     async forgotPasswordDev(
         @Arg("email") email: string,
@@ -152,6 +179,8 @@ export class UserResolver {
         return true;
     }
 
+    // allow user to change password, only if they have successfully
+    // retrieved uuid token from our email that was sent to them
     @Mutation(() => UserResponse)
     async changePassword(
         @Arg("token") token: string,
