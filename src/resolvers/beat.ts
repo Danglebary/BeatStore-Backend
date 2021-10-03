@@ -12,6 +12,7 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Beat } from "../entities/Beat";
+import { Like } from "../entities/Like";
 import { isAuth } from "../middleware/isAuth";
 // Custom imports
 import {
@@ -36,6 +37,7 @@ export class BeatResolver {
     async beats(
         @Arg("limit", () => Int, { nullable: true, defaultValue: 10 })
         limit: number,
+        @Ctx() { req }: MyContext,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedBeatsResponse> {
         const maxLimit = Math.min(50, limit);
@@ -43,13 +45,20 @@ export class BeatResolver {
 
         const replacements: any[] = [checkForMoreLimit];
 
+        const userId = req.session.userId;
+
+        console.log(userId);
+
+        if (userId) {
+            replacements.push(userId);
+        }
+
         if (cursor) {
             replacements.push(new Date(parseInt(cursor)));
         }
 
         const beats = await getConnection().query(
             `
-        
         select b.*,
         json_build_object(
             'id', u.id,
@@ -59,10 +68,16 @@ export class BeatResolver {
             'isAdmin', u."isAdmin",
             'createdAt', u."createdAt",
             'updatedAt', u."updatedAt"
-        ) creator
+        ) creator,
+        ${
+            userId
+                ? '(select exists (select "userId" from "like" where "userId" = $2 and "beatId" = b.id)) "likeStatus"'
+                : 'false as "likeStatus"'
+        }
         from Beat b
         inner join public.user u on u.id = b."creatorId"
-        ${cursor ? `where b."createdAt" > $2 ` : ""}
+        ${cursor && !userId ? `where b."createdAt" > $2` : ""}
+        ${cursor && userId ? `where b."createdAt" > $3 ` : ""}
         order by b."createdAt" DESC
         limit $1
         `,
@@ -125,6 +140,8 @@ export class BeatResolver {
         const { userId } = req.session;
 
         const beat = await Beat.findOne({ id: beatId });
+        const like = await Like.findOne({ where: { beatId, userId } });
+
         if (!beat) {
             return {
                 error: {
@@ -133,6 +150,7 @@ export class BeatResolver {
                 }
             };
         }
+
         if (userId === beat.creatorId) {
             return {
                 error: {
@@ -142,17 +160,27 @@ export class BeatResolver {
             };
         }
 
-        await getConnection().query(
-            `
+        if (like) {
+            await getConnection().query(`
+            START TRANSACTION;
+            delete from "like" where "userId" = ${userId} and "beatId" = ${beatId};
+            update beat
+            set "likesCount" = "likesCount" - 1
+            where id = ${beatId};
+            COMMIT;
+            `);
+            return { valid: true };
+        }
+
+        await getConnection().query(`
         START TRANSACTION;
-        insert into likes ("userId", "beatId")
+        insert into "like" ("userId", "beatId")
         values (${userId}, ${beatId});
         update beat
         set "likesCount" = "likesCount" + 1
         where id = ${beatId};
         COMMIT;
-        `
-        );
+        `);
 
         return { valid: true };
     }
