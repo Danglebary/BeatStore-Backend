@@ -1,3 +1,5 @@
+// General imports
+import path from "path";
 // TypeORM imports
 import { ConnectionOptions } from "typeorm";
 // Entity imports
@@ -12,6 +14,7 @@ const ormConfig: ConnectionOptions = {
     password: "postgres",
     logging: true,
     synchronize: true,
+    migrations: [path.join(__dirname, "./migrations/*")],
     entities: [User, Post, Beat]
 };
 
