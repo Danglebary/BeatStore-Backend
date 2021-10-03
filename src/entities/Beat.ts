@@ -58,7 +58,9 @@ export class Beat extends BaseEntity {
     @Column({ type: "int", default: 0 })
     likesCount: number;
 
-    @Field(() => [Like])
+    @Field(() => Boolean)
+    likeStatus: boolean;
+
     @OneToMany(() => Like, (like) => like.beat)
     likes: Like[];
 
