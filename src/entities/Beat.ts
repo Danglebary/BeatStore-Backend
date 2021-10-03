@@ -6,11 +6,13 @@ import {
     CreateDateColumn,
     Entity,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
 // Custom imports
 import { MusicalKeys } from "../types";
+import { Like } from "./Like";
 import { User } from "./User";
 
 @ObjectType()
@@ -40,10 +42,6 @@ export class Beat extends BaseEntity {
     @Column({ type: "simple-array", nullable: true })
     tags: string[];
 
-    @Field()
-    @Column({ type: "int", default: 0 })
-    likes!: number;
-
     @Field(() => Int)
     @Column()
     creatorId!: number;
@@ -55,6 +53,14 @@ export class Beat extends BaseEntity {
     @Field(() => String, { nullable: true })
     @Column({ nullable: true })
     url: string;
+
+    @Field(() => Int)
+    @Column({ type: "int", default: 0 })
+    likesCount: number;
+
+    @Field(() => [Like])
+    @OneToMany(() => Like, (like) => like.beat)
+    likes: Like[];
 
     @Field(() => String)
     @CreateDateColumn()
