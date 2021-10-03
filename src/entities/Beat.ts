@@ -38,9 +38,9 @@ export class Beat extends BaseEntity {
     @Column({ nullable: true })
     key: MusicalKeys;
 
-    @Field(() => String, { nullable: true })
-    @Column({ type: "simple-array", nullable: true })
-    tags: string[];
+    @Field(() => [String], { nullable: true })
+    @Column({ nullable: true })
+    tags: string;
 
     @Field(() => Int)
     @Column()
