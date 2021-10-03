@@ -16,7 +16,8 @@ import {
     BeatResponse,
     PaginatedBeats,
     CreateBeatInput,
-    UpdateBeatInput
+    UpdateBeatInput,
+    ErrorsOrValidResponse
 } from "../orm_types";
 import { MyContext } from "../types";
 import { validateBeatUpload } from "../validation/validate_beat";
@@ -26,7 +27,8 @@ export class BeatResolver {
     // default is sorted by newest first
     @Query(() => PaginatedBeats)
     async beats(
-        @Arg("limit", () => Int) limit: number,
+        @Arg("limit", () => Int, { nullable: true, defaultValue: 10 })
+        limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedBeats> {
         const maxLimit = Math.min(50, limit);
@@ -71,7 +73,7 @@ export class BeatResolver {
         return Beat.findOne(id);
     }
 
-    @Mutation(() => Beat)
+    @Mutation(() => BeatResponse)
     @UseMiddleware(isAuth)
     async createBeat(
         @Arg("options") options: CreateBeatInput,
@@ -102,6 +104,47 @@ export class BeatResolver {
             };
 
         return { beat };
+    }
+
+    @Mutation(() => ErrorsOrValidResponse)
+    @UseMiddleware(isAuth)
+    async likeBeat(
+        @Arg("beatId", () => Int) beatId: number,
+        @Ctx() { req }: MyContext
+    ): Promise<ErrorsOrValidResponse> {
+        const { userId } = req.session;
+
+        const beat = await Beat.findOne({ id: beatId });
+        if (!beat) {
+            return {
+                error: {
+                    field: "like",
+                    message: "beat does not exist"
+                }
+            };
+        }
+        if (userId === beat.creatorId) {
+            return {
+                error: {
+                    field: "like",
+                    message: "cannot like your own beat"
+                }
+            };
+        }
+
+        await getConnection().query(
+            `
+        START TRANSACTION;
+        insert into likes ("userId", "beatId")
+        values (${userId}, ${beatId});
+        update beat
+        set "likesCount" = "likesCount" + 1
+        where id = ${beatId};
+        COMMIT;
+        `
+        );
+
+        return { valid: true };
     }
 
     @Mutation(() => Boolean)
