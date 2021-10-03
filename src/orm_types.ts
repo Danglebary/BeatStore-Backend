@@ -84,6 +84,15 @@ export class BeatResponse {
 }
 
 @ObjectType()
+export class PaginatedBeats {
+    @Field(() => [Beat])
+    beats: Beat[];
+
+    @Field()
+    hasMore: boolean;
+}
+
+@ObjectType()
 export class UserResponse {
     @Field(() => [FieldError], { nullable: true })
     errors?: FieldError[];
