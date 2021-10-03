@@ -25,6 +25,8 @@ const main = async () => {
     console.log("[SERVER] initializing database connection");
     await createConnection(ormConfig);
 
+    // await Beat.delete({})
+
     console.log("[SERVER] creating server instance");
     const app = express();
 
