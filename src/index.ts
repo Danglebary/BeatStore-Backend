@@ -20,12 +20,17 @@ import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
 import { BeatResolver } from "./resolvers/beat";
 import { graphqlUploadExpress } from "graphql-upload";
+// import { Beat } from "./entities/Beat";
+// import { Like } from "./entities/Like";
+// import { User } from "./entities/User";
 
 const main = async () => {
     console.log("[SERVER] initializing database connection");
     await createConnection(ormConfig);
 
-    // await Beat.delete({})
+    // await Like.delete({});
+    // await Beat.delete({});
+    // await User.delete({});
 
     console.log("[SERVER] creating server instance");
     const app = express();
