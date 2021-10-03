@@ -36,7 +36,7 @@ export class Beat extends BaseEntity {
     @Column({ nullable: true })
     key: MusicalKeys;
 
-    @Field(() => [String], { nullable: true })
+    @Field(() => String, { nullable: true })
     @Column({ type: "simple-array", nullable: true })
     tags: string[];
 
@@ -48,6 +48,7 @@ export class Beat extends BaseEntity {
     @Column()
     creatorId!: number;
 
+    @Field(() => User)
     @ManyToOne(() => User, (user) => user.beats)
     creator!: User;
 
