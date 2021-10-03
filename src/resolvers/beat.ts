@@ -2,10 +2,12 @@
 import {
     Arg,
     Ctx,
+    FieldResolver,
     Int,
     Mutation,
     Query,
     Resolver,
+    Root,
     UseMiddleware
 } from "type-graphql";
 import { getConnection } from "typeorm";
@@ -14,7 +16,7 @@ import { isAuth } from "../middleware/isAuth";
 // Custom imports
 import {
     BeatResponse,
-    PaginatedBeats,
+    PaginatedBeatsResponse,
     CreateBeatInput,
     UpdateBeatInput,
     ErrorsOrValidResponse
@@ -24,13 +26,18 @@ import { validateBeatUpload } from "../validation/validate_beat";
 
 @Resolver(Beat)
 export class BeatResolver {
+    @FieldResolver(() => [String])
+    tags(@Root() beat: Beat) {
+        return beat.tags.split(",");
+    }
+
     // default is sorted by newest first
-    @Query(() => PaginatedBeats)
+    @Query(() => PaginatedBeatsResponse)
     async beats(
         @Arg("limit", () => Int, { nullable: true, defaultValue: 10 })
         limit: number,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null
-    ): Promise<PaginatedBeats> {
+    ): Promise<PaginatedBeatsResponse> {
         const maxLimit = Math.min(50, limit);
         const checkForMoreLimit = maxLimit + 1;
 
@@ -85,8 +92,11 @@ export class BeatResolver {
             return validation;
         }
 
+        const stringTags = JSON.stringify(options.tags);
+
         const beat = await Beat.create({
             ...options,
+            tags: stringTags,
             creatorId: req.session.userId
         }).save();
 
