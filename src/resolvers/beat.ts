@@ -8,18 +8,47 @@ import {
     Resolver,
     UseMiddleware
 } from "type-graphql";
+import { getConnection } from "typeorm";
 import { Beat } from "../entities/Beat";
 import { isAuth } from "../middleware/isAuth";
 // Custom imports
-import { BeatResponse, CreateBeatInput, UpdateBeatInput } from "../orm_types";
+import {
+    BeatResponse,
+    PaginatedBeats,
+    CreateBeatInput,
+    UpdateBeatInput
+} from "../orm_types";
 import { MyContext } from "../types";
 import { validateBeatUpload } from "../validation/validate_beat";
 
-@Resolver()
+@Resolver(Beat)
 export class BeatResolver {
-    @Query(() => [Beat])
-    beats(): Promise<Beat[]> {
-        return Beat.find();
+    // default is sorted by newest first
+    @Query(() => PaginatedBeats)
+    async beats(
+        @Arg("limit", () => Int) limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+    ): Promise<PaginatedBeats> {
+        const maxLimit = Math.min(50, limit);
+        const checkForMoreLimit = maxLimit + 1;
+        const qb = getConnection()
+            .getRepository(Beat)
+            .createQueryBuilder("b")
+            .orderBy('"createdAt"', "DESC")
+            .take(checkForMoreLimit);
+
+        if (cursor) {
+            qb.where('"createdAt" < :cursor', {
+                cursor: new Date(parseInt(cursor))
+            });
+        }
+
+        const beats = await qb.getMany();
+
+        return {
+            beats: beats.slice(0, maxLimit),
+            hasMore: beats.length === checkForMoreLimit
+        };
     }
 
     @Query(() => Beat, { nullable: true })
