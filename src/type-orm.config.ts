@@ -6,6 +6,7 @@ import { ConnectionOptions } from "typeorm";
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
 import { Beat } from "./entities/Beat";
+import { Like } from "./entities/Like";
 
 const ormConfig: ConnectionOptions = {
     type: "postgres",
@@ -15,7 +16,7 @@ const ormConfig: ConnectionOptions = {
     logging: true,
     synchronize: true,
     migrations: [path.join(__dirname, "./migrations/*")],
-    entities: [User, Post, Beat]
+    entities: [User, Post, Beat, Like]
 };
 
 export default ormConfig;
