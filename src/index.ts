@@ -15,7 +15,6 @@ import session from "express-session";
 
 // Custom imports
 import { COOKIE_NAME, PORT, __prod__ } from "./constants";
-import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
 import { BeatResolver } from "./resolvers/beat";
@@ -72,7 +71,7 @@ const main = async () => {
         graphqlHTTP(async (req, res) => {
             return {
                 schema: await buildSchema({
-                    resolvers: [PostResolver, UserResolver, BeatResolver],
+                    resolvers: [UserResolver, BeatResolver],
                     validate: false
                 }),
                 context: { req, res, redis } as MyContext,
