@@ -19,7 +19,6 @@ import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
 import { BeatResolver } from "./resolvers/beat";
-import { graphqlUploadExpress } from "graphql-upload";
 // import { Beat } from "./entities/Beat";
 // import { Like } from "./entities/Like";
 // import { User } from "./entities/User";
@@ -55,6 +54,7 @@ const main = async () => {
                 disableTouch: true
             }),
             cookie: {
+                path: "/",
                 maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
                 httpOnly: true,
                 sameSite: "lax",
@@ -65,8 +65,6 @@ const main = async () => {
             resave: false
         })
     );
-
-    app.use(graphqlUploadExpress({ maxFileSize: 10000, maxFiles: 1 }));
 
     console.log("[SERVER] applying express-graphql middleware");
     app.use(
