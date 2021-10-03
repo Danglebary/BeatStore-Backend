@@ -31,19 +31,34 @@ export class BeatResolver {
     ): Promise<PaginatedBeats> {
         const maxLimit = Math.min(50, limit);
         const checkForMoreLimit = maxLimit + 1;
-        const qb = getConnection()
-            .getRepository(Beat)
-            .createQueryBuilder("b")
-            .orderBy('"createdAt"', "DESC")
-            .take(checkForMoreLimit);
+
+        const replacements: any[] = [checkForMoreLimit];
 
         if (cursor) {
-            qb.where('"createdAt" < :cursor', {
-                cursor: new Date(parseInt(cursor))
-            });
+            replacements.push(new Date(parseInt(cursor)));
         }
 
-        const beats = await qb.getMany();
+        const beats = await getConnection().query(
+            `
+        
+        select b.*,
+        json_build_object(
+            'id', u.id,
+            'userName', u."userName",
+            'email', u.email,
+            'location', u.location,
+            'isAdmin', u."isAdmin",
+            'createdAt', u."createdAt",
+            'updatedAt', u."updatedAt"
+        ) creator
+        from Beat b
+        inner join public.user u on u.id = b."creatorId"
+        ${cursor ? `where b."createdAt" > $2 ` : ""}
+        order by b."createdAt" DESC
+        limit $1
+        `,
+            replacements
+        );
 
         return {
             beats: beats.slice(0, maxLimit),
