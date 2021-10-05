@@ -62,7 +62,7 @@ export class BeatResolver {
         select b.*,
         json_build_object(
             'id', u.id,
-            'userName', u."userName",
+            'username', u.username,
             'email', u.email,
             'location', u.location,
             'isAdmin', u."isAdmin",
@@ -101,7 +101,7 @@ export class BeatResolver {
             select b.*,
             json_build_object(
                 'id', u.id,
-                'userName', u."userName",
+                'username', u.username,
                 'email', u.email,
                 'location', u.location,
                 'createdAt', u."createdAt",
@@ -147,6 +147,7 @@ export class BeatResolver {
     }
 
     @Mutation(() => CreateBeatResponse)
+    @UseMiddleware(isAuth)
     async updateBeat(
         @Arg("options") options: UpdateBeatInput
     ): Promise<CreateBeatResponse> {
@@ -214,8 +215,12 @@ export class BeatResolver {
     }
 
     @Mutation(() => Boolean)
-    async deleteBeat(@Arg("id", () => Int) id: number): Promise<boolean> {
-        await Beat.delete(id);
+    @UseMiddleware(isAuth)
+    async deleteBeat(
+        @Arg("id", () => Int) id: number,
+        @Ctx() { req }: MyContext
+    ): Promise<boolean> {
+        await Beat.delete({ id, creatorId: req.session.userId });
         return true;
     }
 }
