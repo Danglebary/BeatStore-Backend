@@ -23,7 +23,10 @@ import {
     CreateBeatResponse
 } from "../orm_types";
 import { MyContext } from "../types";
-import { validateBeatUpload } from "../validation/validate_beat";
+import {
+    validateBeatUpdate,
+    validateBeatUpload
+} from "../validation/validate_beat";
 
 @Resolver(Beat)
 export class BeatResolver {
@@ -149,15 +152,28 @@ export class BeatResolver {
     @Mutation(() => CreateBeatResponse)
     @UseMiddleware(isAuth)
     async updateBeat(
-        @Arg("options") options: UpdateBeatInput
+        @Arg("options", () => UpdateBeatInput) options: UpdateBeatInput,
+        @Ctx() { req }: MyContext
     ): Promise<CreateBeatResponse> {
-        const beat = await Beat.findOne({ where: { id: options.id } });
-        if (!beat)
-            return {
-                errors: [{ field: "id", message: "beat no longer exists" }]
-            };
+        const validation = validateBeatUpdate(options);
+        if (validation.errors) {
+            return validation;
+        }
 
-        return { beat };
+        const stringTags = JSON.stringify(options.tags);
+
+        const result = await getConnection()
+            .createQueryBuilder()
+            .update(Beat)
+            .set({ ...options, tags: stringTags })
+            .where('id = :id and "creatorId" = :creatorId', {
+                id: options.id,
+                creatorId: req.session.userId
+            })
+            .returning("*")
+            .execute();
+
+        return { beat: result.raw[0] };
     }
 
     @Mutation(() => ErrorsOrValidResponse)
