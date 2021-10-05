@@ -220,7 +220,15 @@ export class BeatResolver {
         @Arg("id", () => Int) id: number,
         @Ctx() { req }: MyContext
     ): Promise<boolean> {
-        await Beat.delete({ id, creatorId: req.session.userId });
+        const beat = await Beat.findOne(id);
+        if (!beat) {
+            return false;
+        }
+        if (beat.creatorId !== req.session.userId) {
+            throw new Error("not authorized");
+        }
+        await Like.delete({ beatId: id });
+        await Beat.delete(id);
         return true;
     }
 }
