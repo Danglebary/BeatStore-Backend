@@ -50,8 +50,24 @@ export class UserResolver {
 
     // fetch single user by id
     @Query(() => User, { nullable: true })
-    user(@Arg("id", () => Int) id: number): Promise<User | undefined> {
+    async userById(
+        @Arg("id", () => Int) id: number
+    ): Promise<User | undefined> {
         return User.findOne(id);
+    }
+
+    // fetch single user by username
+    @Query(() => User, { nullable: true })
+    async userByUsername(
+        @Arg("username", () => String) username: string
+    ): Promise<User | undefined> {
+        console.log(username);
+        const user = await User.findOne(
+            { username: username },
+            { relations: ["beats"] }
+        );
+        console.log(user);
+        return user;
     }
 
     // register new user
