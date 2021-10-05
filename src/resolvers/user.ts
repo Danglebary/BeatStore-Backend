@@ -66,7 +66,7 @@ export class UserResolver {
         }
         const user = await User.create({
             email: options.email,
-            userName: options.username,
+            username: options.username,
             password: await argon2.hash(options.password)
         }).save();
 
