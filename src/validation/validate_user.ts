@@ -18,7 +18,7 @@ export const validateRegister: (
 
     const userByEmail = await User.findOne({ where: { email: data.email } });
     const userByUsername = await User.findOne({
-        where: { userName: data.username }
+        where: { username: data.username }
     });
 
     if (userByEmail) {
