@@ -16,11 +16,11 @@ import { Like } from "../entities/Like";
 import { isAuth } from "../middleware/isAuth";
 // Custom imports
 import {
-    BeatResponse,
     PaginatedBeatsResponse,
     CreateBeatInput,
     UpdateBeatInput,
-    ErrorsOrValidResponse
+    ErrorsOrValidResponse,
+    CreateBeatResponse
 } from "../orm_types";
 import { MyContext } from "../types";
 import { validateBeatUpload } from "../validation/validate_beat";
@@ -91,16 +91,44 @@ export class BeatResolver {
     }
 
     @Query(() => Beat, { nullable: true })
-    beat(@Arg("id", () => Int) id: number): Promise<Beat | undefined> {
-        return Beat.findOne(id);
+    async beat(
+        @Arg("id", () => Int) beatId: number,
+        @Ctx() { req }: MyContext
+    ): Promise<Beat | undefined> {
+        const userId = req.session.userId;
+        const result = await getConnection().query(
+            `
+            select b.*,
+            json_build_object(
+                'id', u.id,
+                'userName', u."userName",
+                'email', u.email,
+                'location', u.location,
+                'createdAt', u."createdAt",
+                'updatedAt', u."updatedAt"
+            ) creator,
+            ${
+                userId
+                    ? '(select exists (select "userId" from "like" where "userId" = $2 and "beatId" = b.id)) "likeStatus"'
+                    : 'false as "likeStatus"'
+            }
+            from Beat b
+            inner join public.user u on u.id = b."creatorId"
+            where b.id = $1
+            limit 1
+            `,
+            [beatId, userId]
+        );
+
+        return result[0];
     }
 
-    @Mutation(() => BeatResponse)
+    @Mutation(() => CreateBeatResponse)
     @UseMiddleware(isAuth)
     async createBeat(
         @Arg("options") options: CreateBeatInput,
         @Ctx() { req }: MyContext
-    ): Promise<BeatResponse> {
+    ): Promise<CreateBeatResponse> {
         const validation = validateBeatUpload(options);
 
         if (validation.errors) {
@@ -118,10 +146,10 @@ export class BeatResolver {
         return { beat };
     }
 
-    @Mutation(() => Beat, { nullable: true })
+    @Mutation(() => CreateBeatResponse)
     async updateBeat(
         @Arg("options") options: UpdateBeatInput
-    ): Promise<BeatResponse> {
+    ): Promise<CreateBeatResponse> {
         const beat = await Beat.findOne({ where: { id: options.id } });
         if (!beat)
             return {
