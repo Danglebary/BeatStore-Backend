@@ -1,4 +1,6 @@
+// Custom imports
 import { FieldError } from "../orm_types";
+import { MusicalKeys } from "../types";
 
 export const validateStringLength: (
     data: string,
@@ -12,6 +14,14 @@ export const validateStringLength: (
 export const validateIsEmail: (email: string) => boolean = (email) => {
     if (!email.includes("@")) return false;
     return true;
+};
+
+export const validateMusicalKey: (key: string) => boolean = (key) => {
+    if (key in MusicalKeys) {
+        return true;
+    } else {
+        return false;
+    }
 };
 
 export const formatError: (field: string, message: string) => FieldError = (
