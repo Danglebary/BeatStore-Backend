@@ -75,7 +75,7 @@ export class FieldError {
 }
 
 @ObjectType()
-export class BeatResponse {
+export class CreateBeatResponse {
     @Field(() => [FieldError], { nullable: true })
     errors?: FieldError[];
 
