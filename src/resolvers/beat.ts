@@ -50,8 +50,6 @@ export class BeatResolver {
 
         const userId = req.session.userId;
 
-        console.log(userId);
-
         if (userId) {
             replacements.push(userId);
         }
@@ -155,12 +153,15 @@ export class BeatResolver {
         @Arg("options", () => UpdateBeatInput) options: UpdateBeatInput,
         @Ctx() { req }: MyContext
     ): Promise<CreateBeatResponse> {
+        let stringTags = "";
+        if (options.tags) {
+            stringTags = options.tags.join(",");
+        }
+
         const validation = validateBeatUpdate(options);
         if (validation.errors) {
             return validation;
         }
-
-        const stringTags = JSON.stringify(options.tags);
 
         const result = await getConnection()
             .createQueryBuilder()
