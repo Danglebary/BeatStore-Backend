@@ -17,7 +17,7 @@ export const validateIsEmail: (email: string) => boolean = (email) => {
 };
 
 export const validateMusicalKey: (key: string) => boolean = (key) => {
-    if (key in MusicalKeys) {
+    if (Object.values(MusicalKeys).includes(key as MusicalKeys)) {
         return true;
     } else {
         return false;
