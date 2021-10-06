@@ -125,7 +125,7 @@ export class UserResolver {
         const user = await User.findOne(
             isEmail
                 ? { where: { email: options.usernameOrEmail } }
-                : { where: { userName: options.usernameOrEmail } }
+                : { where: { username: options.usernameOrEmail } }
         );
         if (!user) {
             return {
