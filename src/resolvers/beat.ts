@@ -11,10 +11,10 @@ import {
     UseMiddleware
 } from "type-graphql";
 import { getConnection } from "typeorm";
+// Custom imports
 import { Beat } from "../entities/Beat";
 import { Like } from "../entities/Like";
-import { isAuth } from "../middleware/isAuth";
-// Custom imports
+import { isAuth } from "../middleware/graphQL/isAuth";
 import {
     PaginatedBeatsResponse,
     CreateBeatInput,
@@ -30,11 +30,13 @@ import {
 
 @Resolver(Beat)
 export class BeatResolver {
+    // tags resolver, return string array of tags
     @FieldResolver(() => [String])
     tags(@Root() beat: Beat) {
         return beat.tags.split(",");
     }
 
+    // FETCH ALL BEATS QUERY WITH CURSOR PAGINATION
     // default is sorted by newest first
     @Query(() => PaginatedBeatsResponse)
     async beats(
@@ -91,6 +93,7 @@ export class BeatResolver {
         };
     }
 
+    // FETCH SINGLE BEAT BY ID QUERY
     @Query(() => Beat, { nullable: true })
     async beat(
         @Arg("id", () => Int) beatId: number,
@@ -124,6 +127,7 @@ export class BeatResolver {
         return result[0];
     }
 
+    // CREATE BEAT MUTATION
     @Mutation(() => CreateBeatResponse)
     @UseMiddleware(isAuth)
     async createBeat(
@@ -147,6 +151,7 @@ export class BeatResolver {
         return { beat };
     }
 
+    // UPDATE BEAT MUTATION
     @Mutation(() => CreateBeatResponse)
     @UseMiddleware(isAuth)
     async updateBeat(
@@ -177,6 +182,8 @@ export class BeatResolver {
         return { beat: result.raw[0] };
     }
 
+    // LIKE BEAT MUTATION
+    // if beat has been liked, remove or "unlike" beat
     @Mutation(() => ErrorsOrValidResponse)
     @UseMiddleware(isAuth)
     async likeBeat(
@@ -231,6 +238,7 @@ export class BeatResolver {
         return { valid: true };
     }
 
+    // DELETE BEAT BY ID MUTATION
     @Mutation(() => Boolean)
     @UseMiddleware(isAuth)
     async deleteBeat(
