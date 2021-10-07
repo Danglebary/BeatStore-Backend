@@ -25,11 +25,11 @@ export const validateMusicalKey: (key: string) => boolean = (key) => {
 };
 
 export const formatError: (field: string, message: string) => FieldError = (
-    field,
+    fld,
     msg
 ) => {
     return {
-        field: field,
+        field: fld,
         message: msg
     };
 };
