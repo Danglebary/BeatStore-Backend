@@ -16,13 +16,17 @@ export const validateBeatUpload: (
 ) => ValidationResponse = (options) => {
     const errors: FieldError[] = [];
 
+    // validate title
     const isTitleValid = validateStringLength(options.title, 2, 100);
     if (!isTitleValid) errors.push(formatError("title", "Too short"));
 
-    if (options.genre) {
-        const isGenreValid = validateStringLength(options.genre, 2, 100);
-        if (!isGenreValid) errors.push(formatError("genre", "Too short"));
-    }
+    // validate genre
+    const isGenreValid = validateStringLength(options.genre, 2, 100);
+    if (!isGenreValid) errors.push(formatError("genre", "Too short"));
+
+    // validate key
+    const isKeyValid = validateMusicalKey(options.key);
+    if (!isKeyValid) errors.push(formatError("key", "invalid value"));
 
     if (errors.length > 0) return { errors };
 
@@ -33,18 +37,18 @@ export const validateBeatUpdate: (
     options: UpdateBeatInput
 ) => ValidationResponse = (options) => {
     const errors: FieldError[] = [];
-    if (options.title) {
-        const isTitleValid = validateStringLength(options.title, 2, 100);
-        if (!isTitleValid) errors.push(formatError("title", "Too short"));
-    }
-    if (options.genre) {
-        const isGenreValid = validateStringLength(options.genre, 2, 100);
-        if (!isGenreValid) errors.push(formatError("genre", "Too short"));
-    }
-    if (options.key) {
-        const isKeyValid = validateMusicalKey(options.key);
-        if (!isKeyValid) errors.push(formatError("key", "invalid value"));
-    }
+
+    // validate title
+    const isTitleValid = validateStringLength(options.title, 2, 100);
+    if (!isTitleValid) errors.push(formatError("title", "Too short"));
+
+    // validate genre
+    const isGenreValid = validateStringLength(options.genre, 2, 100);
+    if (!isGenreValid) errors.push(formatError("genre", "Too short"));
+
+    // validate key
+    const isKeyValid = validateMusicalKey(options.key);
+    if (!isKeyValid) errors.push(formatError("key", "invalid value"));
 
     if (errors.length > 0) return { errors };
     return { valid: true };
