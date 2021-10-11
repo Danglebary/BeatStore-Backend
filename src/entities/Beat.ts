@@ -26,21 +26,21 @@ export class Beat extends BaseEntity {
     @Column()
     title!: string;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
-    genre: string;
+    @Field(() => String)
+    @Column()
+    genre!: string;
 
-    @Field(() => Int, { nullable: true })
-    @Column({ type: "int", nullable: true })
-    bpm: number;
+    @Field(() => Int)
+    @Column({ type: "int" })
+    bpm!: number;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
-    key: MusicalKeys;
+    @Field(() => String)
+    @Column()
+    key!: MusicalKeys;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
-    tags: string;
+    @Field(() => [String])
+    @Column()
+    tags!: string;
 
     @Field(() => Int)
     @Column()
@@ -50,16 +50,16 @@ export class Beat extends BaseEntity {
     @ManyToOne(() => User, (user) => user.beats)
     creator!: User;
 
-    @Field(() => String, { nullable: true })
-    @Column({ nullable: true })
-    url: string;
+    @Field(() => String)
+    @Column()
+    s3Key!: string;
 
     @Field(() => Int)
     @Column({ type: "int", default: 0 })
-    likesCount: number;
+    likesCount!: number;
 
     @Field(() => Boolean)
-    likeStatus: boolean;
+    likeStatus!: boolean;
 
     @OneToMany(() => Like, (like) => like.beat)
     likes: Like[];
