@@ -22,6 +22,7 @@ import {
     ErrorsOrValidResponse,
     CreateBeatResponse
 } from "../orm_types";
+import { deleteBeat } from "../restResolvers/deleteBeat";
 import { MyContext } from "../types";
 import {
     validateBeatUpdate,
@@ -158,20 +159,13 @@ export class BeatResolver {
         @Arg("options", () => UpdateBeatInput) options: UpdateBeatInput,
         @Ctx() { req }: MyContext
     ): Promise<CreateBeatResponse> {
-        let stringTags = "";
-        if (options.tags) {
-            stringTags = options.tags.join(",");
-        }
-
         const validation = validateBeatUpdate(options);
-        if (validation.errors) {
-            return validation;
-        }
+        if (validation.errors) return validation;
 
         const result = await getConnection()
             .createQueryBuilder()
             .update(Beat)
-            .set({ ...options, tags: stringTags })
+            .set({ ...options, tags: options.tags.join(",") })
             .where('id = :id and "creatorId" = :creatorId', {
                 id: options.id,
                 creatorId: req.session.userId
@@ -183,7 +177,7 @@ export class BeatResolver {
     }
 
     // LIKE BEAT MUTATION
-    // if beat has been liked, remove or "unlike" beat
+    // if beat has already been liked, remove or "unlike" beat
     @Mutation(() => ErrorsOrValidResponse)
     @UseMiddleware(isAuth)
     async likeBeat(
@@ -212,29 +206,14 @@ export class BeatResolver {
                 }
             };
         }
-
         if (like) {
-            await getConnection().query(`
-            START TRANSACTION;
-            delete from "like" where "userId" = ${userId} and "beatId" = ${beatId};
-            update beat
-            set "likesCount" = "likesCount" - 1
-            where id = ${beatId};
-            COMMIT;
-            `);
+            await Like.delete({ beatId: beat.id, userId: userId });
+            await Beat.update(beat.id, { likesCount: beat.likesCount - 1 });
             return { valid: true };
         }
 
-        await getConnection().query(`
-        START TRANSACTION;
-        insert into "like" ("userId", "beatId")
-        values (${userId}, ${beatId});
-        update beat
-        set "likesCount" = "likesCount" + 1
-        where id = ${beatId};
-        COMMIT;
-        `);
-
+        await Like.create({ userId: userId, beatId: beat.id }).save();
+        await Beat.update(beat.id, { likesCount: beat.likesCount + 1 });
         return { valid: true };
     }
 
@@ -252,6 +231,7 @@ export class BeatResolver {
         if (beat.creatorId !== req.session.userId) {
             throw new Error("not authorized");
         }
+        await deleteBeat(beat.s3Key);
         await Like.delete({ beatId: id });
         await Beat.delete(id);
         return true;
