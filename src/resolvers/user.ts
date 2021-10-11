@@ -12,7 +12,6 @@ import {
 import argon2 from "argon2";
 import { v4 } from "uuid";
 // Custom imports
-import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 import { User } from "../entities/User";
 import {
     validateChangePassword,
@@ -21,6 +20,8 @@ import {
 import { sendEmail } from "../utils/sendEmailDev";
 import { MyContext } from "../types";
 import { UserResponse, RegisterUserInput, LoginUserInput } from "../orm_types";
+
+const FORGET_PASSWORD_PREFIX = process.env.FORGOT_PASSWORD_PREFIX;
 
 @Resolver(User)
 export class UserResolver {
@@ -139,7 +140,10 @@ export class UserResolver {
                 ]
             };
         }
-        const isValidPass = argon2.verify(user.password, options.password);
+        const isValidPass = await argon2.verify(
+            user.password,
+            options.password
+        );
         if (!isValidPass) {
             return {
                 errors: [{ field: "password", message: "incorrect password" }]
@@ -155,7 +159,7 @@ export class UserResolver {
         return new Promise((resolve) =>
             req.session.destroy((err) => {
                 // clear cookie even if session fails to be destroyed
-                res.clearCookie(COOKIE_NAME);
+                res.clearCookie(process.env.COOKIE_NAME);
                 if (err) {
                     console.log(err);
                     resolve(false);
