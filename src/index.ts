@@ -1,16 +1,22 @@
 // General imports
+require("dotenv").config();
 import express from "express";
+import fileUpload from "express-fileupload";
 // TypeORM imports
 import { createConnection } from "typeorm";
 import ormConfig from "./type-orm.config";
 // Middleware imports
 import { corsMiddleware } from "./middleware/server/corsMiddleware";
 import { sessionMiddleware } from "./middleware/server/sessionMiddleware";
-// Custom imports
-import { PORT, __prod__ } from "./constants";
 import { graphqlConfig } from "./middleware/server/graphqlConfig";
+// Custom imports
+import { uploadBeat } from "./restResolvers/uploadBeat";
+import { fetchBeat } from "./restResolvers/fetchBeat";
 
 const main = async () => {
+    // process env vars
+    const port = process.env.PORT;
+
     // create postgres db connection
     await createConnection(ormConfig);
 
@@ -30,9 +36,16 @@ const main = async () => {
     const graphql = await graphqlConfig(redis);
     app.use("/graphql", graphql);
 
+    // beat file upload middleware, api, resolver
+    app.use(fileUpload());
+    app.post("/upload-beat", uploadBeat);
+    app.get("/beat/:key", fetchBeat);
+
+    // beat file fetch
+
     // start server
-    app.listen(PORT, () => {
-        console.log(`[SERVER] running on port ${PORT}`);
+    app.listen(port, () => {
+        console.log(`[SERVER] running on port ${port}`);
     });
 };
 
