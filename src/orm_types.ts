@@ -23,38 +23,26 @@ export class CreateBeatInput {
     @Field(() => String)
     title!: string;
 
-    @Field(() => String, { nullable: true })
-    genre?: string;
+    @Field(() => String)
+    genre!: string;
 
-    @Field(() => Int, { nullable: true })
-    bpm?: number;
+    @Field(() => Int)
+    bpm!: number;
 
-    @Field(() => String, { nullable: true })
-    key?: MusicalKeys;
+    @Field(() => String)
+    key!: MusicalKeys;
 
-    @Field(() => [String], { nullable: true })
-    tags?: string[];
+    @Field(() => [String])
+    tags!: string[];
+
+    @Field(() => String)
+    s3Key!: string;
 }
 
 @InputType()
-export class UpdateBeatInput {
+export class UpdateBeatInput extends CreateBeatInput {
     @Field(() => Int)
     id!: number;
-
-    @Field(() => String, { nullable: true })
-    title?: string;
-
-    @Field(() => String, { nullable: true })
-    genre?: string;
-
-    @Field(() => Int, { nullable: true })
-    bpm?: number;
-
-    @Field(() => String, { nullable: true })
-    key?: MusicalKeys;
-
-    @Field(() => [String], { nullable: true })
-    tags?: string[];
 }
 
 @InputType()
