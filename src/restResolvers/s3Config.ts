@@ -11,6 +11,7 @@ export const s3config = () => {
         credentials: {
             accessKeyId: accessKey,
             secretAccessKey: secretAccessKey
-        }
+        },
+        signatureVersion: "v4"
     });
 };
