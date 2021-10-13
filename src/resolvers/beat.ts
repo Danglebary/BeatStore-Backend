@@ -22,7 +22,6 @@ import {
     ErrorsOrValidResponse,
     CreateBeatResponse
 } from "../orm_types";
-import { deleteBeat } from "../restResolvers/deleteBeat";
 import { MyContext } from "../types";
 import {
     validateBeatUpdate,
@@ -141,7 +140,7 @@ export class BeatResolver {
             return validation;
         }
 
-        const stringTags = JSON.stringify(options.tags);
+        const stringTags = options.tags.join(",");
 
         const beat = await Beat.create({
             ...options,
@@ -231,7 +230,6 @@ export class BeatResolver {
         if (beat.creatorId !== req.session.userId) {
             throw new Error("not authorized");
         }
-        await deleteBeat(beat.s3Key);
         await Like.delete({ beatId: id });
         await Beat.delete(id);
         return true;
