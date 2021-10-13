@@ -40,9 +40,24 @@ export class CreateBeatInput {
 }
 
 @InputType()
-export class UpdateBeatInput extends CreateBeatInput {
+export class UpdateBeatInput {
     @Field(() => Int)
     id!: number;
+
+    @Field(() => String)
+    title!: string;
+
+    @Field(() => String)
+    genre!: string;
+
+    @Field(() => Int)
+    bpm!: number;
+
+    @Field(() => String)
+    key!: MusicalKeys;
+
+    @Field(() => [String])
+    tags!: string[];
 }
 
 @InputType()
