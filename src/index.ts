@@ -10,8 +10,7 @@ import { corsMiddleware } from "./middleware/server/corsMiddleware";
 import { sessionMiddleware } from "./middleware/server/sessionMiddleware";
 import { graphqlConfig } from "./middleware/server/graphqlConfig";
 // Custom imports
-import { uploadBeat } from "./restResolvers/uploadBeat";
-import { fetchBeat } from "./restResolvers/fetchBeat";
+import { getS3Url } from "./restResolvers/getS3Url";
 
 const main = async () => {
     // process env vars
@@ -26,6 +25,9 @@ const main = async () => {
     // apply server cors configuration
     app.use(corsMiddleware());
 
+    // apply bodyParser middleware
+    app.use(express.json());
+
     // instantiate and connect to redis store
     const { redis, sessionMiddleware: session } = sessionMiddleware();
 
@@ -38,8 +40,7 @@ const main = async () => {
 
     // beat file upload middleware, api, resolver
     app.use(fileUpload());
-    app.post("/upload-beat", uploadBeat);
-    app.get("/beat/:key", fetchBeat);
+    app.put("/s3url", getS3Url);
 
     // beat file fetch
 
