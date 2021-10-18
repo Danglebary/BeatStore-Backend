@@ -10,6 +10,7 @@ import {
 import { Field, Int, ObjectType } from "type-graphql";
 import { Beat } from "./Beat";
 import { Like } from "./Like";
+import { PaginatedBeatsResponse } from "../orm_types";
 
 @ObjectType()
 @Entity()
@@ -29,17 +30,9 @@ export class User extends BaseEntity {
     @Column({ unique: true })
     email!: string;
 
-    @Field(() => String)
-    @Column({ nullable: true })
-    location: string;
-
-    @Field(() => Boolean)
-    @Column({ type: "boolean", nullable: true })
-    isAdmin: Boolean;
-
-    @Field(() => [Beat])
+    @Field(() => PaginatedBeatsResponse)
     @OneToMany(() => Beat, (beat) => beat.creator)
-    beats!: Beat[];
+    beats!: PaginatedBeatsResponse;
 
     @Field(() => [Like])
     @OneToMany(() => Like, (like) => like.user)
