@@ -18,8 +18,15 @@ import {
     validateRegister
 } from "../validation/validate_user";
 import { sendEmail } from "../utils/sendEmailDev";
+// Type imports
 import { MyContext } from "../types";
-import { UserResponse, RegisterUserInput, LoginUserInput } from "../orm_types";
+import {
+    UserResponse,
+    RegisterUserInput,
+    LoginUserInput,
+    PaginatedBeatsResponse
+} from "../orm_types";
+import { getConnection } from "typeorm";
 
 const FORGET_PASSWORD_PREFIX = process.env.FORGOT_PASSWORD_PREFIX;
 
@@ -34,6 +41,40 @@ export class UserResolver {
         }
         // current user fetching other user
         return "";
+    }
+
+    @FieldResolver(() => PaginatedBeatsResponse)
+    async beats(
+        @Root() user: User,
+        @Arg("limit", () => Int, { nullable: true, defaultValue: 10 })
+        limit: number,
+        @Arg("cursor", () => String, { nullable: true }) cursor: string
+    ) {
+        const maxLimit = Math.min(50, limit);
+        const checkForMoreLimit = maxLimit + 1;
+
+        const replacements: any[] = [checkForMoreLimit, user.id];
+
+        if (cursor) {
+            replacements.push(new Date(parseInt(cursor)));
+        }
+
+        const beats = await getConnection().query(
+            `
+        select b.*
+        from Beat b
+        where b."creatorId" = $2
+        ${cursor ? `and b."createdAt" < $3` : ""}
+        order by b."createdAt" DESC
+        limit $1
+        `,
+            replacements
+        );
+
+        return {
+            beats: beats.slice(0, maxLimit),
+            hasMore: beats.length === checkForMoreLimit
+        };
     }
 
     // simple useful query to fetch current logged in user data
@@ -59,16 +100,10 @@ export class UserResolver {
 
     // fetch single user by username
     @Query(() => User, { nullable: true })
-    async userByUsername(
+    userByUsername(
         @Arg("username", () => String) username: string
     ): Promise<User | undefined> {
-        console.log(username);
-        const user = await User.findOne(
-            { username: username },
-            { relations: ["beats"] }
-        );
-        console.log(user);
-        return user;
+        return User.findOne({ username: username });
     }
 
     // register new user
@@ -91,30 +126,6 @@ export class UserResolver {
         req.session.userId = user.id;
 
         return { user };
-    }
-
-    // remove single user by id
-    @Mutation(() => Boolean)
-    async removeUser(
-        @Arg("userId") userId: number,
-        @Ctx() { req }: MyContext
-    ): Promise<Boolean> {
-        // check if logged in && isAdmin first
-        const reqUser = await User.findOne(req.session.userId);
-        if (!reqUser) return false;
-        if (!reqUser.isAdmin) return false;
-
-        // check if user to be removed exists
-        const userToRemove = await User.findOne(userId);
-        if (!userToRemove) return false;
-
-        try {
-            User.delete(userId);
-            return true;
-        } catch (err) {
-            console.log(err);
-            return false;
-        }
     }
 
     @Mutation(() => UserResponse)
