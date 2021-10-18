@@ -1,6 +1,10 @@
-import { Request, Response } from "express";
+// General imports
 import session from "express-session";
+import { Request, Response } from "express";
 import { Redis } from "ioredis";
+// Custom imports
+import { createUserLoader } from "./dataLoaders/createUserLoader";
+import { createLikeLoader } from "./dataLoaders/createLikeLoader";
 
 declare module "express-session" {
     export interface SessionData {
@@ -12,6 +16,8 @@ export type MyContext = {
     req: Request & { session: typeof session };
     res: Response;
     redis: Redis;
+    userLoader: ReturnType<typeof createUserLoader>;
+    likeLoader: ReturnType<typeof createLikeLoader>;
 };
 
 export enum MusicalKeys {
