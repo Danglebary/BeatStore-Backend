@@ -9,6 +9,8 @@ import { BeatResolver } from "../../resolvers/beat";
 // Type imports
 import IORedis from "ioredis";
 import { MyContext } from "../../types";
+import { createUserLoader } from "../../dataLoaders/createUserLoader";
+import { createLikeLoader } from "../../dataLoaders/createLikeLoader";
 
 export const graphqlConfig = async (redis: IORedis.Redis) => {
     return graphqlHTTP(async (req, res) => {
@@ -17,7 +19,13 @@ export const graphqlConfig = async (redis: IORedis.Redis) => {
                 resolvers: [UserResolver, BeatResolver],
                 validate: false
             }),
-            context: { req, res, redis } as MyContext,
+            context: {
+                req,
+                res,
+                redis,
+                userLoader: createUserLoader(),
+                likeLoader: createLikeLoader()
+            } as MyContext,
             graphiql: true
         };
     });
