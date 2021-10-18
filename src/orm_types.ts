@@ -1,6 +1,9 @@
+// General imports
 import { InputType, Field, ObjectType, Int } from "type-graphql";
+// Entity imports
 import { Beat } from "./entities/Beat";
 import { User } from "./entities/User";
+// Type imports
 import { MusicalKeys } from "./types";
 
 @InputType()
@@ -13,9 +16,6 @@ export class RegisterUserInput {
 
     @Field(() => String)
     email: string;
-
-    @Field(() => String, { nullable: true })
-    location?: string;
 }
 
 @InputType()
@@ -93,6 +93,27 @@ export class PaginatedBeatsResponse {
 
     @Field()
     hasMore: boolean;
+}
+
+@ObjectType()
+export class UserPaginatedBeatsResponse {
+    @Field(() => Int)
+    id: number;
+
+    @Field(() => String)
+    username: string;
+
+    @Field(() => String)
+    email: string;
+
+    @Field(() => String)
+    createdAt: Date;
+
+    @Field(() => String)
+    updatedAt: Date;
+
+    @Field(() => PaginatedBeatsResponse)
+    beats: PaginatedBeatsResponse;
 }
 
 @ObjectType()
