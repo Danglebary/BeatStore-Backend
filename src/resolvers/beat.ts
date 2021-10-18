@@ -14,6 +14,7 @@ import { getConnection } from "typeorm";
 // Custom imports
 import { Beat } from "../entities/Beat";
 import { Like } from "../entities/Like";
+import { User } from "../entities/User";
 import { isAuth } from "../middleware/graphQL/isAuth";
 import {
     PaginatedBeatsResponse,
@@ -35,6 +36,26 @@ export class BeatResolver {
     tags(@Root() beat: Beat) {
         return beat.tags.split(",");
     }
+    @FieldResolver(() => User)
+    creator(@Root() beat: Beat, @Ctx() { userLoader }: MyContext) {
+        return userLoader.load(beat.creatorId);
+    }
+
+    @FieldResolver(() => Boolean)
+    async likeStatus(
+        @Root() beat: Beat,
+        @Ctx() { likeLoader, req }: MyContext
+    ) {
+        if (!req.session.userId) {
+            return false;
+        }
+        const like = await likeLoader.load({
+            beatId: beat.id,
+            userId: req.session.userId
+        });
+
+        return like ? true : false;
+    }
 
     // FETCH ALL BEATS QUERY WITH CURSOR PAGINATION
     // default is sorted by newest first
@@ -42,7 +63,6 @@ export class BeatResolver {
     async beats(
         @Arg("limit", () => Int, { nullable: true, defaultValue: 10 })
         limit: number,
-        @Ctx() { req }: MyContext,
         @Arg("cursor", () => String, { nullable: true }) cursor: string | null
     ): Promise<PaginatedBeatsResponse> {
         const maxLimit = Math.min(50, limit);
@@ -50,37 +70,15 @@ export class BeatResolver {
 
         const replacements: any[] = [checkForMoreLimit];
 
-        const userId = req.session.userId;
-
-        if (userId) {
-            replacements.push(userId);
-        }
-
         if (cursor) {
             replacements.push(new Date(parseInt(cursor)));
         }
 
         const beats = await getConnection().query(
             `
-        select b.*,
-        json_build_object(
-            'id', u.id,
-            'username', u.username,
-            'email', u.email,
-            'location', u.location,
-            'isAdmin', u."isAdmin",
-            'createdAt', u."createdAt",
-            'updatedAt', u."updatedAt"
-        ) creator,
-        ${
-            userId
-                ? '(select exists (select "userId" from "like" where "userId" = $2 and "beatId" = b.id)) "likeStatus"'
-                : 'false as "likeStatus"'
-        }
+        select b.*
         from Beat b
-        inner join public.user u on u.id = b."creatorId"
-        ${cursor && !userId ? `where b."createdAt" > $2` : ""}
-        ${cursor && userId ? `where b."createdAt" > $3 ` : ""}
+        ${cursor ? `where b."createdAt" < $2` : ""}
         order by b."createdAt" DESC
         limit $1
         `,
@@ -95,36 +93,8 @@ export class BeatResolver {
 
     // FETCH SINGLE BEAT BY ID QUERY
     @Query(() => Beat, { nullable: true })
-    async beat(
-        @Arg("id", () => Int) beatId: number,
-        @Ctx() { req }: MyContext
-    ): Promise<Beat | undefined> {
-        const userId = req.session.userId;
-        const result = await getConnection().query(
-            `
-            select b.*,
-            json_build_object(
-                'id', u.id,
-                'username', u.username,
-                'email', u.email,
-                'location', u.location,
-                'createdAt', u."createdAt",
-                'updatedAt', u."updatedAt"
-            ) creator,
-            ${
-                userId
-                    ? '(select exists (select "userId" from "like" where "userId" = $2 and "beatId" = b.id)) "likeStatus"'
-                    : 'false as "likeStatus"'
-            }
-            from Beat b
-            inner join public.user u on u.id = b."creatorId"
-            where b.id = $1
-            limit 1
-            `,
-            [beatId, userId]
-        );
-
-        return result[0];
+    beat(@Arg("id", () => Int) beatId: number): Promise<Beat | undefined> {
+        return Beat.findOne(beatId);
     }
 
     // CREATE BEAT MUTATION
