@@ -100,6 +100,18 @@ export class BeatResolver {
         return Beat.findOne(beatId);
     }
 
+    @Query(() => Beat, { nullable: true })
+    async singleBeatByTitleAndUsername(
+        @Arg("beatTitle", () => String) beatTitle: string,
+        @Arg("username", () => String) username: string
+    ): Promise<Beat | undefined> {
+        const user = await User.findOne({ username: username });
+
+        if (!user) return undefined;
+
+        return Beat.findOne({ title: beatTitle, creatorId: user.id });
+    }
+
     // CREATE BEAT MUTATION
     @Mutation(() => CreateBeatResponse)
     @UseMiddleware(isAuth)
