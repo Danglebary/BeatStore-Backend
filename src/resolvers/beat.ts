@@ -36,11 +36,14 @@ export class BeatResolver {
     tags(@Root() beat: Beat) {
         return beat.tags.split(",");
     }
+
+    // creator resolver using dataLoader
     @FieldResolver(() => User)
     creator(@Root() beat: Beat, @Ctx() { userLoader }: MyContext) {
         return userLoader.load(beat.creatorId);
     }
 
+    // likeStatus computed field resolver using dataLoader
     @FieldResolver(() => Boolean)
     async likeStatus(
         @Root() beat: Beat,
