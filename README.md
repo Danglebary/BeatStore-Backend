@@ -2,7 +2,7 @@
 
 Backend implementation for a social media app / e-commerce store for instrumental music.
 
-# STACK
+## Stack
 
 -   typescript
 -   express
