@@ -1,7 +1,6 @@
 // General imports
 require("dotenv").config();
 import express from "express";
-import fileUpload from "express-fileupload";
 // TypeORM imports
 import { createConnection } from "typeorm";
 import ormConfig from "./type-orm.config";
@@ -39,7 +38,6 @@ const main = async () => {
     app.use("/graphql", graphql);
 
     // beat file upload middleware, api, resolver
-    app.use(fileUpload());
     app.put("/s3url", getS3Url);
 
     // beat file fetch
