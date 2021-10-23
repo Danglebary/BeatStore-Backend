@@ -1,11 +1,17 @@
+# BeatStore-Backend
+
+Backend implementation for a social media app / e-commerce store for instrumental music.
+
 # STACK
 
+-   typescript
 -   express
 -   express-graphql
 -   express-sessions
--   typescript
 -   type-graphql
--   Mikro-orm
+-   type-orm
 -   postgres
 -   redis
+-   dataloader
 -   argon2
+-   AWS sdk
